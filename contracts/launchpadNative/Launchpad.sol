@@ -11,6 +11,7 @@ interface IERC20 {
 
 contract Launchpad is Ownable {
     address public token;
+    uint256 public maxTokensToSell = 100000 ether; //100.000 token decimal = 18
     uint public startTime;
     uint public endTime;
     uint256 public maxBuy; // ETH decimal (10^18)
@@ -18,6 +19,7 @@ contract Launchpad is Ownable {
 
     mapping(address => uint256) public balances;
     mapping(address => uint256) public tokenBalances;
+    uint256 public totalTokensSold;
 
     event Bought(address buyer, uint256 amount);
 
@@ -37,9 +39,11 @@ contract Launchpad is Ownable {
         require(balances[msg.sender] + msg.value <= maxBuy, "Exceeds maximum buy limit");
         uint256 amount = msg.value * rate;
         require(amount > 0, "Amount must be greater than zero");
+        require(totalTokensSold + amount <= maxTokensToSell, "Exceeds maximum tokens to sell");
         require(IERC20(token).balanceOf(address(this)) >= amount, "Insufficient tokens");
         balances[msg.sender] += msg.value;
         tokenBalances[msg.sender] += amount;
+        totalTokensSold += amount;
         require(IERC20(token).transfer(msg.sender, amount), "Transfer failed");
         emit Bought(msg.sender, amount);
     }
@@ -54,6 +58,11 @@ contract Launchpad is Ownable {
         uint256 balance = IERC20(_anyToken).balanceOf(address(this));
         require(balance > 0, "Balance must be greater than zero");
         require(IERC20(_anyToken).transfer(owner(), balance), "Transfer failed");
+    }
+
+    function setMaxTokensToSell(uint256 _maxTokensToSell) external onlyOwner {
+        require(_maxTokensToSell > 0, "Max tokens to sell must be greater than 0");
+        maxTokensToSell = _maxTokensToSell;
     }
 
     function setToken(address _token) external onlyOwner {

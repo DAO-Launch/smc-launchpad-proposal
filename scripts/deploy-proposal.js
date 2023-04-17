@@ -4,7 +4,7 @@ require("dotenv").config();
 async function main() {
     const Contract = await hre.ethers.getContractFactory("Proposal");
     const myContract = await Contract.deploy(
-        process.env.LAUNCHPAD, // launchpad address       
+        process.env.LAUNCHPAD // launchpad address
     );
     await myContract.deployed();
     console.log("Proposal deployed to address:", myContract.address);
